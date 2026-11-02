@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator - आधुनिक कैलकुलेटर</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --screen-bg: #090d16;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --btn-num: #334155;
+      --btn-num-hover: #475569;
+      --btn-op: #f59e0b;
+      --btn-op-hover: #d97706;
+      --btn-action: #64748b;
+      --btn-action-hover: #475569;
+      --btn-equal: #3b82f6;
+      --btn-equal-hover: #2563eb;
+      --history-border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .calculator-card {
+      background-color: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .calc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .calc-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .calc-badge {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    /* Display Screen */
+    .display-screen {
+      background-color: var(--screen-bg);
+      margin: 0.5rem 1rem;
+      padding: 1.25rem 1rem;
+      border-radius: 1rem;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-height: 110px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .expression-line {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      min-height: 1.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.5px;
+    }
+
+    .current-val {
+      color: var(--text-main);
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      word-break: break-all;
+    }
+
+    /* Keypad Grid */
+    .keypad {
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      border-radius: 1rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1;
+      transition: all 0.15s ease-in-out;
+      color: var(--text-main);
+    }
+
+    button:active {
+      transform: scale(0.94);
+    }
+
+    .btn-num {
+      background-color: var(--btn-num);
+    }
+    .btn-num:hover {
+      background-color: var(--btn-num-hover);
+    }
+
+    .btn-op {
+      background-color: var(--btn-op);
+      color: #ffffff;
+      font-size: 1.4rem;
+    }
+    .btn-op:hover {
+      background-color: var(--btn-op-hover);
+    }
+
+    .btn-action {
+      background-color: var(--btn-action);
+      color: #f1f5f9;
+      font-size: 1.1rem;
+    }
+    .btn-action:hover {
+      background-color: var(--btn-action-hover);
+    }
+
+    .btn-equal {
+      background-color: var(--btn-equal);
+      color: #ffffff;
+      font-size: 1.5rem;
+      grid-column: span 1;
+    }
+    .btn-equal:hover {
+      background-color: var(--btn-equal-hover);
+    }
+
+    /* History & Footer */
+    .calc-footer {
+      border-top: 1px solid var(--history-border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .history-drawer {
+      background-color: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--history-border);
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .history-drawer.open {
+      display: block;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.06);
+      cursor: pointer;
+    }
+    .history-item:hover {
+      color: #60a5fa;
+    }
+
+    .btn-toggle-history {
+      background: none;
+      color: var(--text-muted);
+      border: 1px solid var(--history-border);
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      aspect-ratio: auto;
+    }
+    .btn-toggle-history:hover {
+      color: var(--text-main);
+      border-color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator-card" role="region" aria-label="Calculator App">
+    <!-- Header -->
+    <div class="calc-header">
+      <div class="calc-title">
+        <span>Calculator</span>
+        <span class="calc-badge">HTML5</span>
+      </div>
+      <button class="btn-toggle-history" id="toggleHistoryBtn" title="हिस्ट्री देखें" aria-label="Toggle History">
+        इतिहास 📜
+      </button>
+    </div>
+
+    <!-- History list -->
+    <div class="history-drawer" id="historyDrawer" aria-label="Calculation History">
+      <div id="historyList">कोई पुराना हिसाब नहीं है</div>
+    </div>
+
+    <!-- Screen -->
+    <div class="display-screen" aria-live="polite">
+      <div class="expression-line" id="expressionDisplay" aria-label="Expression"></div>
+      <div class="current-val" id="mainDisplay" aria-label="Result">0</div>
+    </div>
+
+    <!-- Keypad -->
+    <div class="keypad">
+      <!-- Row 1 -->
+      <button class="btn-action" data-action="clear" aria-label="Clear All">AC</button>
+      <button class="btn-action" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button class="btn-action" data-action="percent" aria-label="Percentage">%</button>
+      <button class="btn-op" data-action="op" data-val="÷" aria-label="Divide">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn-num" data-num="7" aria-label="7">7</button>
+      <button class="btn-num" data-num="8" aria-label="8">8</button>
+      <button class="btn-num" data-num="9" aria-label="9">9</button>
+      <button class="btn-op" data-action="op" data-val="×" aria-label="Multiply">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn-num" data-num="4" aria-label="4">4</button>
+      <button class="btn-num" data-num="5" aria-label="5">5</button>
+      <button class="btn-num" data-num="6" aria-label="6">6</button>
+      <button class="btn-op" data-action="op" data-val="−" aria-label="Minus">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn-num" data-num="1" aria-label="1">1</button>
+      <button class="btn-num" data-num="2" aria-label="2">2</button>
+      <button class="btn-num" data-num="3" aria-label="3">3</button>
+      <button class="btn-op" data-action="op" data-val="+" aria-label="Plus">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn-num" data-action="negate" aria-label="Toggle Sign">±</button>
+      <button class="btn-num" data-num="0" aria-label="0">0</button>
+      <button class="btn-num" data-num="." aria-label="Decimal point">.</button>
+      <button class="btn-equal" data-action="calculate" aria-label="Equals">=</button>
+    </div>
+
+    <!-- Footer info -->
+    <div class="calc-footer">
+      <span>कीबोर्ड सपोर्ट एक्टिव (0-9, +, -, *, /, Enter)</span>
+      <span>Pure HTML & JS</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      let currentInput = '0';
+      let expression = '';
+      let shouldResetScreen = false;
+      let history = [];
+
+      const mainDisplay = document.getElementById('mainDisplay');
+      const expressionDisplay = document.getElementById('expressionDisplay');
+      const historyDrawer = document.getElementById('historyDrawer');
+      const historyList = document.getElementById('historyList');
+      const toggleHistoryBtn = document.getElementById('toggleHistoryBtn');
+
+      function updateDisplay() {
+        mainDisplay.textContent = currentInput;
+        expressionDisplay.textContent = expression;
+      }
+
+      function appendNumber(num) {
+        if (shouldResetScreen) {
+          currentInput = '';
+          shouldResetScreen = false;
+        }
+        if (num === '.' && currentInput.includes('.')) return;
+        if (currentInput === '0' && num !== '.') {
+          currentInput = num;
+        } else {
+          currentInput += num;
+        }
+        updateDisplay();
+      }
+
+      function chooseOperator(op) {
+        if (expression !== '' && !shouldResetScreen) {
+          evaluate();
+        }
+        expression = currentInput + ' ' + op;
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function evaluate() {
+        if (!expression || shouldResetScreen) return;
+        
+        const fullExpr = expression + ' ' + currentInput;
+        let cleanExpr = fullExpr
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/−/g, '-');
+
+        try {
+          const result = Function('"use strict"; return (' + cleanExpr + ')')();
+          
+          if (!isFinite(result)) {
+            currentInput = 'त्रुटि';
+            expression = '';
+            shouldResetScreen = true;
+            updateDisplay();
+            return;
+          }
+
+          const formattedResult = parseFloat(result.toFixed(8)).toString();
+          
+          history.unshift({
+            expr: fullExpr,
+            result: formattedResult
+          });
+          if (history.length > 10) history.pop();
+          renderHistory();
+
+          expression = fullExpr + ' =';
+          currentInput = formattedResult;
+          shouldResetScreen = true;
+          updateDisplay();
+        } catch (e) {
+          currentInput = 'त्रुटि';
+          updateDisplay();
+        }
+      }
+
+      function clearAll() {
+        currentInput = '0';
+        expression = '';
+        shouldResetScreen = false;
+        updateDisplay();
+      }
+
+      function backspace() {
+        if (shouldResetScreen) {
+          clearAll();
+          return;
+        }
+        if (currentInput.length === 1 || (currentInput.length === 2 && currentInput.startsWith('-'))) {
+          currentInput = '0';
+        } else {
+          currentInput = currentInput.slice(0, -1);
+        }
+        updateDisplay();
+      }
+
+      function toggleSign() {
+        if (currentInput === '0') return;
+        currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
+        updateDisplay();
+      }
+
+      function applyPercent() {
+        const val = parseFloat(currentInput);
+        if (!isNaN(val)) {
+          currentInput = (val / 100).toString();
+          updateDisplay();
+        }
+      }
+
+      function renderHistory() {
+        if (history.length === 0) {
+          historyList.innerHTML = '<div style="color:#64748b;text-align:center;">कोई पुराना हिसाब नहीं है</div>';
+          return;
+        }
+        historyList.innerHTML = history.map((item, idx) => `
+          <div class="history-item" data-idx="${idx}">
+            <span>${item.expr}</span>
+            <strong>= ${item.result}</strong>
+          </div>
+        `).join('');
+
+        const items = historyList.querySelectorAll('.history-item');
+        items.forEach(el => {
+          el.addEventListener('click', () => {
+            const idx = parseInt(el.getAttribute('data-idx'));
+            if (history[idx]) {
+              currentInput = history[idx].result;
+              updateDisplay();
+            }
+          });
+        });
+      }
+
+      document.querySelectorAll('button[data-num]').forEach(btn => {
+        btn.addEventListener('click', () => appendNumber(btn.getAttribute('data-num')));
+      });
+
+      document.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const action = btn.getAttribute('data-action');
+          if (action === 'clear') clearAll();
+          else if (action === 'backspace') backspace();
+          else if (action === 'percent') applyPercent();
+          else if (action === 'negate') toggleSign();
+          else if (action === 'op') chooseOperator(btn.getAttribute('data-val'));
+          else if (action === 'calculate') evaluate();
+        });
+      });
+
+      toggleHistoryBtn.addEventListener('click', () => {
+        historyDrawer.classList.toggle('open');
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+          appendNumber(e.key);
+        } else if (e.key === '+') {
+          chooseOperator('+');
+        } else if (e.key === '-') {
+          chooseOperator('−');
+        } else if (e.key === '*') {
+          chooseOperator('×');
+        } else if (e.key === '/') {
+          e.preventDefault();
+          chooseOperator('÷');
+        } else if (e.key === 'Enter' || e.key === '=') {
+          e.preventDefault();
+          evaluate();
+        } else if (e.key === 'Backspace') {
+          backspace();
+        } else if (e.key === 'Escape') {
+          clearAll();
+        } else if (e.key === '%') {
+          applyPercent();
+        }
+      });
+
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>
